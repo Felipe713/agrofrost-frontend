@@ -1,125 +1,226 @@
-# AgroFrost Frontend
+# ❄️ AgroFrost Frontend — Frost Risk at a Glance
 
-AgroFrost Frontend is a web application built with TypeScript Vanilla and Vite. It retrieves current meteorological temperatures for agricultural fields and visually evaluates their frost risk. It conceptually continues the AgroFrost Core domain, but it currently works as an independent frontend and is not connected to the Java backend.
+> 🎓 **Educational project:** This repository is the **Hito 2** frontend deliverable for a Java Full Stack bootcamp. It focuses on strict TypeScript, safe DOM manipulation, form validation, asynchronous requests, and resilient user feedback.
 
-## Features
+---
 
-- Loading current weather data for three Chilean agricultural fields.
-- Classifying frost risk as `SAFE`, `WARNING`, or `CRITICAL`.
-- Adding a temporary agricultural field through a validated form.
-- Displaying loading, success, empty, and error states.
-- Retrying failed weather requests.
-- Responsive design for desktop, tablet, and mobile.
-- Accessible visual feedback for forms and asynchronous operations.
+## 🌱 About the Project
 
-## Frost Risk Rules
+**AgroFrost Frontend** is a responsive web application built with **Vanilla TypeScript and Vite**. It retrieves current meteorological temperatures for agricultural fields and compares them with each crop's critical threshold to provide a clear frost-risk classification.
 
-- `CRITICAL`:
+The project continues the domain introduced in [AgroFrost Core](https://github.com/Felipe713/agrofrost-core), but both repositories are currently independent:
 
-  `measuredTemperature <= criticalTemperature`
+- **AgroFrost Core:** Java domain logic developed with TDD, JUnit, Mockito, and JaCoCo.
+- **AgroFrost Frontend:** browser-based interface built with TypeScript, native DOM APIs, and Fetch.
 
-- `WARNING`:
+No Java backend integration or data persistence is implemented yet.
 
-  `measuredTemperature > criticalTemperature`
+---
 
-  and
+## 🎯 Engineering Goals
 
-  `measuredTemperature <= criticalTemperature + 2.0`
+This project demonstrates how to build a maintainable frontend without a framework, with special emphasis on:
 
-- `SAFE`:
+1. **Strict domain modeling:** interfaces describe business data, while enums restrict frost-risk and request states.
+2. **Safe browser interactions:** DOM nodes are protected with null guards and specialized type assertions.
+3. **Resilient asynchronous flows:** weather requests use `async/await`, `try/catch`, `response.ok`, loading states, friendly errors, and retry behavior.
+4. **Clear separation of responsibilities:** models, components, services, views, utilities, and initial data live in dedicated modules.
 
-  `measuredTemperature > criticalTemperature + 2.0`
+---
 
-## Frost Risk Examples
+## 🔥 Main Features
 
-For a field with a critical temperature of **0 °C**:
+- 🌡️ Loads current weather data for three Chilean agricultural fields.
+- ❄️ Classifies each field as `SAFE`, `WARNING`, or `CRITICAL`.
+- 🧾 Adds a temporary field through a strictly validated form.
+- ⏳ Displays loading, success, empty, and error states.
+- 🔁 Recovers from failed weather requests through a Retry action.
+- 📱 Adapts to desktop, tablet, and mobile screens.
+- ♿ Provides accessible visual feedback for forms and asynchronous operations.
+- 🛡️ Validates external JSON before trusting it inside the application.
+
+---
+
+## 🧊 Frost Risk Model
+
+The risk level is calculated by comparing the measured temperature with the field's critical temperature.
+
+| Risk level | Rule | Meaning |
+|---|---|---|
+| `CRITICAL` | `measuredTemperature <= criticalTemperature` | The crop has reached or crossed its critical threshold. |
+| `WARNING` | `measuredTemperature > criticalTemperature` and `measuredTemperature <= criticalTemperature + 2.0` | The crop is still above the threshold, but inside the precaution margin. |
+| `SAFE` | `measuredTemperature > criticalTemperature + 2.0` | The temperature is above the warning margin. |
+
+### Frost Risk Examples
+
+Assume a field has a critical temperature of **0 °C**:
 
 | Measured temperature | Result | Explanation |
 |---:|---|---|
-| -1.0 °C | CRITICAL | The measured temperature is below the critical threshold. |
-| 0.0 °C | CRITICAL | A temperature equal to the critical threshold is still critical. |
-| 1.5 °C | WARNING | The temperature is above the threshold but remains within the 2 °C warning margin. |
-| 2.0 °C | WARNING | The upper warning boundary is inclusive. |
-| 2.1 °C | SAFE | The temperature is more than 2 °C above the critical threshold. |
+| `-1.0 °C` | `CRITICAL` | The measured temperature is below the critical threshold. |
+| `0.0 °C` | `CRITICAL` | A temperature equal to the critical threshold is still critical. |
+| `1.5 °C` | `WARNING` | The temperature is above the threshold but remains within the 2 °C warning margin. |
+| `2.0 °C` | `WARNING` | The upper warning boundary is inclusive. |
+| `2.1 °C` | `SAFE` | The temperature is more than 2 °C above the critical threshold. |
 
-The critical threshold is inclusive. The upper warning boundary is also inclusive. A measured temperature exactly equal to the critical temperature is `CRITICAL`, and a measured temperature exactly 2 °C above the critical temperature is still `WARNING`.
+> The critical threshold is inclusive, and the upper warning boundary is inclusive as well. Therefore, exactly `0 °C` is `CRITICAL`, while exactly `2 °C` is still `WARNING` in this example.
 
-## Technologies
+---
 
-- TypeScript
-- Vite
-- Vanilla HTML
-- Vanilla CSS
-- Native ES modules
-- Native Fetch API
-- Open-Meteo API
+## 🔄 From Weather Data to a Visual Decision
 
-## Project Structure
+```text
+Agricultural field configuration
+              ↓
+      Open-Meteo request
+              ↓
+ External JSON validation
+              ↓
+    Frost-risk calculation
+              ↓
+ SAFE / WARNING / CRITICAL card
+```
+
+The frontend treats remote data as `unknown`, validates the expected payload structure, creates a typed weather reading, evaluates the risk, and then renders the result in the dashboard.
+
+---
+
+## 🚀 Technology Stack
+
+| Area | Technology |
+|---|---|
+| Language | TypeScript |
+| Development server and build | Vite |
+| Interface | Semantic HTML + Vanilla CSS |
+| Architecture | Native ES modules |
+| HTTP client | Native Fetch API |
+| Weather source | Open-Meteo API |
+| DOM handling | Native browser APIs |
+
+No React, Vue, Angular, Axios, Bootstrap, Tailwind CSS, or backend framework is used.
+
+---
+
+## 📁 Project Structure
 
 ```text
 agrofrost-frontend/
-├── public/
+├── public/                         # Static public assets
 ├── src/
-│   ├── components/
+│   ├── components/                 # Reusable cards, form, and state views
+│   │   ├── FieldCard/
+│   │   ├── FieldForm/
+│   │   └── StateView/
 │   ├── data/
-│   ├── models/
+│   │   └── initialFields.ts        # Initial Chilean agricultural fields
+│   ├── models/                     # Interfaces and enums
 │   ├── services/
+│   │   └── weather.service.ts      # Open-Meteo communication
 │   ├── styles/
-│   ├── utils/
+│   │   └── global.css              # Responsive application styles
+│   ├── utils/                      # DOM, validation, type guards, and risk logic
 │   ├── views/
-│   └── main.ts
+│   │   └── frostDashboard.view.ts  # Dashboard DOM coordination
+│   └── main.ts                     # Application bootstrap
 ├── docs/
+│   ├── HITO2_CHECKLIST.md
+│   └── HITO2_EXPLANATION_ES.md
 ├── index.html
 ├── package.json
 ├── tsconfig.json
 └── README.md
 ```
 
-- `models`: business interfaces and enums.
-- `components`: reusable DOM rendering and form modules.
-- `services`: communication with Open-Meteo.
-- `views`: dashboard DOM coordination.
-- `utils`: DOM helpers, validation, type guards, and frost-risk calculation.
-- `data`: initial agricultural field configuration.
-- `main.ts`: application entry point and bootstrap orchestration.
+### Module Responsibilities
 
-## Strict TypeScript
+- **`models`** — defines business interfaces and strict enums.
+- **`components`** — creates reusable visual elements and captures form interactions.
+- **`services`** — communicates with Open-Meteo and validates its response.
+- **`views`** — coordinates dashboard containers and visual states.
+- **`utils`** — contains pure risk logic, validators, DOM helpers, and type guards.
+- **`data`** — stores the initial field configuration.
+- **`main.ts`** — starts the application and orchestrates the initial loading flow.
 
-Interfaces model business data, and enums restrict frost-risk and request states. External JSON and caught errors are handled as `unknown`; external JSON is validated before it is trusted. The project does not use `any`. Strict null checks require safe DOM handling before elements are used.
+---
 
-## Safe DOM and Form Handling
+## 🛡️ Strict TypeScript and Safe DOM Handling
 
-DOM elements may be `null`, so null guards run before elements are accessed. Specialized type assertions are used for `HTMLFormElement` and `HTMLInputElement`. `event.preventDefault()` avoids the form's native page reload. Invalid form data displays visible feedback and does not trigger a weather request.
+The application keeps TypeScript protections active throughout the frontend:
 
-## Asynchronous Behavior
+- Business objects are modeled with exported `interface` declarations.
+- `FrostRiskLevel` and `RequestStatus` prevent free-form state strings.
+- External JSON and caught errors are handled as `unknown`.
+- The source code does not use `any`.
+- External JSON is checked with a type guard before use.
+- DOM elements are treated as potentially `null`.
+- `HTMLFormElement` and `HTMLInputElement` assertions are combined with explicit guards.
+- `event.preventDefault()` stops the form from reloading the page.
+- Invalid data is rejected before any weather request is sent.
 
-The application uses `async/await` instead of nested `.then()` calls. `try/catch` protects the interface from network failures, while `response.ok` validates the HTTP response. Loading and error messages are displayed in the DOM, and the Retry button repeats the initial weather request. Technical errors are logged to the console while user-facing messages remain friendly.
+---
 
-## Installation and Execution
+## ⚡ Asynchronous and Resilient UI
+
+Weather requests use modern asynchronous control:
+
+- `async/await` keeps the flow readable.
+- `try/catch` prevents network failures from breaking the page.
+- `response.ok` validates the HTTP response before reading the payload.
+- Loading messages guide the user while data is being requested.
+- Friendly errors are displayed in the interface.
+- Technical details remain available through `console.error`.
+- The Retry button repeats the initial weather request after a failure.
+- The form button is temporarily disabled to prevent duplicate submissions.
+
+---
+
+## 🛠️ Installation and Local Execution
+
+### 1. Install dependencies
 
 ```bash
 npm install
+```
+
+### 2. Start the development server
+
+```bash
 npm run dev
+```
+
+Vite will display the local URL in the terminal, usually `http://localhost:5173`.
+
+### 3. Verify TypeScript and create the production build
+
+```bash
 npm run build
+```
+
+### 4. Preview the production build
+
+```bash
 npm run preview
 ```
 
-- `npm install`: installs the project dependencies.
-- `npm run dev`: starts the Vite development server.
-- `npm run build`: checks TypeScript and produces the production build.
-- `npm run preview`: serves the generated production build locally.
+---
 
-## Form Testing
+## 🧪 Try the Form
 
-Use the following valid example:
+Use this valid Chilean example:
 
-- Field name: `Campo de prueba`
-- Crop: `Palto`
-- Latitude: `-33.60`
-- Longitude: `-70.88`
-- Critical temperature: `1`
+| Field | Value |
+|---|---|
+| Field name | `Campo de prueba` |
+| Crop | `Palto` |
+| Latitude | `-33.60` |
+| Longitude | `-70.88` |
+| Critical temperature | `1` |
 
-Try these invalid examples as well:
+The application should request the current temperature, classify the frost risk, add a new card, and clear the form.
+
+### Validation Scenarios
+
+Try the following values one at a time:
 
 - Empty field name.
 - Empty crop.
@@ -128,20 +229,26 @@ Try these invalid examples as well:
 - Critical temperature `-11`.
 - Critical temperature `11`.
 
-Invalid data must display visible messages and must not execute a weather request.
+Invalid data must display visible feedback and must not trigger a weather request.
 
-## Network Error and Retry Testing
+---
+
+## 🧯 Test Network Failure and Recovery
 
 1. Start the application with `npm run dev`.
-2. Open browser developer tools.
+2. Open the browser developer tools.
 3. Block requests to `api.open-meteo.com`.
 4. Reload the application.
-5. Confirm that a friendly error message and the Retry button appear.
+5. Confirm that the dashboard displays a friendly error and the **Retry** button.
 6. Remove the request block.
-7. Press Retry.
-8. Confirm that the three agricultural fields load again.
+7. Press **Retry**.
+8. Confirm that the three initial fields load again.
 
-## Limitations
+> Do not place the entire browser in Offline mode for this test, because that also blocks the local Vite application.
+
+---
+
+## ⚠️ Current Limitations
 
 - No persistence is implemented.
 - Fields added through the form disappear after reloading.
@@ -149,6 +256,19 @@ Invalid data must display visible messages and must not execute a weather reques
 - Weather readings come from an external meteorological service.
 - The readings do not represent physical sensors installed in agricultural fields.
 
-## Related Project
+---
 
-[AgroFrost Core](https://github.com/Felipe713/agrofrost-core) corresponds to the Java domain developed in Hito 1 with TDD, JUnit, Mockito, and JaCoCo.
+## 🔗 Related Project
+
+### [AgroFrost Core](https://github.com/Felipe713/agrofrost-core)
+
+The Hito 1 Java domain project developed with:
+
+- TDD
+- JUnit 5
+- Mockito
+- JaCoCo
+- Constructor dependency injection
+- Pure domain architecture
+
+Together, both repositories represent the first two stages of the AgroFrost learning project: tested Java business rules and a dynamic TypeScript frontend.
