@@ -3,6 +3,8 @@ import { isFiniteNumber, isRecord } from '../utils/typeGuards';
 
 interface OpenMeteoResponse { current: { temperature_2m: number; time: string; }; }
 
+const WEATHER_REQUEST_ERROR_MESSAGE = 'No fue posible consultar el clima. Revisa tu conexión e intenta nuevamente.';
+
 function isOpenMeteoResponse(value: unknown): value is OpenMeteoResponse {
   if (!isRecord(value) || !isRecord(value.current)) return false;
   return isFiniteNumber(value.current.temperature_2m) && typeof value.current.time === 'string';
@@ -18,7 +20,7 @@ export async function fetchCurrentWeather(field: AgriculturalField): Promise<Wea
     if (!isOpenMeteoResponse(payload)) throw new Error('Open-Meteo returned an unexpected weather payload.');
     return { temperature: payload.current.temperature_2m, observedAt: payload.current.time };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'An unexpected error occurred.';
-    throw new Error(`No fue posible consultar el clima: ${message}`);
+    console.error('[AgroFrost] Weather request failed:', error);
+    throw new Error(WEATHER_REQUEST_ERROR_MESSAGE);
   }
 }

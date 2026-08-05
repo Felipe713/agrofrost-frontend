@@ -31,6 +31,6 @@
 
 ## Entregable
 
-- [x] README en español.
+- [x] README principal en inglés.
 - [x] `npm install`, `npm run dev` y `npm run build` documentados.
-- [ ] Repositorio GitHub público (pendiente de poder inicializar Git en este entorno).
+- [x] Repositorio GitHub público.

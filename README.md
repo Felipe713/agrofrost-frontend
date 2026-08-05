@@ -1,31 +1,56 @@
 # AgroFrost Frontend
 
-Aplicación web en TypeScript Vanilla y Vite que consulta temperaturas actuales de campos agrícolas y evalúa visualmente su riesgo de helada. Continúa conceptualmente el dominio de [AgroFrost Core](https://github.com/Felipe713/agrofrost-core), pero es un frontend completamente independiente: aún no se conecta al backend Java.
+AgroFrost Frontend is a TypeScript Vanilla and Vite web application that retrieves current weather data for agricultural fields and visually evaluates frost risk. It continues the agricultural domain introduced in [AgroFrost Core](https://github.com/Felipe713/agrofrost-core), while remaining a fully independent frontend project: it is not connected to the Java backend yet.
 
-## Funcionalidades
+## Features
 
-- Consulta Open-Meteo para tres campos iniciales chilenos.
-- Clasifica cada lectura como `SAFE`, `WARNING` o `CRITICAL`.
-- Permite agregar un campo temporal con formulario validado.
-- Ofrece estados de carga, éxito, vacío y error, con reintento para la carga inicial.
+- Loads current weather data for three Chilean agricultural fields through Open-Meteo.
+- Classifies each reading as `SAFE`, `WARNING`, or `CRITICAL`.
+- Adds a temporary field through a validated form.
+- Shows loading, success, empty, and error states.
+- Provides a retry action when the initial weather request fails.
 
-## Reglas de riesgo
+## Frost-risk rules
 
-- `CRITICAL`: temperatura medida menor o igual a la crítica.
-- `WARNING`: superior a la crítica y menor o igual a crítica + 2 °C.
-- `SAFE`: superior a crítica + 2 °C.
+- `CRITICAL`: measured temperature is less than or equal to the critical temperature.
+- `WARNING`: measured temperature is above the critical temperature and less than or equal to critical temperature + 2 °C.
+- `SAFE`: measured temperature is above critical temperature + 2 °C.
 
-## Tecnologías y arquitectura
+## Technologies
 
-TypeScript estricto, Vite, HTML semántico, CSS Vanilla, módulos ES y Fetch. La estructura separa `models`, `components`, `services`, `views`, `utils` y `data`.
+- TypeScript
+- Vite
+- Vanilla HTML and CSS
+- Native ES modules
+- Fetch API
+- [Open-Meteo](https://open-meteo.com/)
 
-Las interfaces describen datos (`AgriculturalField`, `WeatherReading`, `FrostObservation`, `FieldFormPayload`); los enums controlan riesgos y estados sin strings libres. El modo strict, las guardias de DOM y las aserciones especializadas manejan valores potencialmente nulos. El submit usa `preventDefault`, `async/await`, `try/catch` y `response.ok`; el JSON externo se recibe como `unknown` y se valida antes de utilizarse.
+## Project structure
 
-## API
+```text
+src/
+  components/     Reusable DOM rendering and form modules
+  data/           Initial agricultural field configuration
+  models/         Business interfaces and enums
+  services/       Open-Meteo communication
+  styles/         Global Vanilla CSS
+  utils/          DOM, validation, type-guard, and risk helpers
+  views/          Dashboard coordination
+  main.ts         Application entry point
+docs/             Spanish study and defense documentation
+```
 
-Usa [Open-Meteo](https://open-meteo.com/), sin claves ni temperaturas simuladas. El servicio devuelve datos meteorológicos demostrativos, no lecturas de sensores instalados en terreno.
+## Strict typing and safe DOM handling
 
-## Ejecutar
+Interfaces define the application data (`AgriculturalField`, `WeatherReading`, `FrostObservation`, and `FieldFormPayload`), while enums constrain frost-risk and request-state values. TypeScript runs in strict mode, including strict null checks. External JSON is first handled as `unknown` and validated through a type guard; there is zero use of `any` in the TypeScript source.
+
+DOM references use explicit null guards and specialized type assertions such as `HTMLInputElement | null`. The form calls `preventDefault()` before reading and validating its values, preventing a page reload.
+
+## Asynchronous behavior
+
+Weather requests use `async/await`, `try/catch`, and `response.ok`. The interface provides visual feedback for loading, success, empty, and error conditions. A failed initial request keeps the Retry button available. Technical request details are logged to the browser console, while users receive a clear, non-technical error message.
+
+## Installation and execution
 
 ```bash
 npm install
@@ -34,12 +59,21 @@ npm run build
 npm run preview
 ```
 
-Para probar el formulario, ingresa nombre y cultivo, una latitud entre -90 y 90, longitud entre -180 y 180 y temperatura crítica entre -10 y 10 °C. También prueba textos vacíos y valores fuera de rango: se mostrarán mensajes accesibles junto al formulario.
+## Testing the form
 
-## Estados visuales
+Run the development server, then enter a field name and crop, a latitude between -90 and 90, a longitude between -180 and 180, and a critical temperature between -10 and 10 °C. A valid submission retrieves the current weather and adds a temporary card. Try blank text values and out-of-range numbers to verify the validation feedback.
 
-Carga inicial, éxito con tarjetas, vacío, error con botón Reintentar y confirmación/error durante el envío del formulario.
+## Testing network errors and retry
 
-## Limitaciones
+With the application open, temporarily disable network access and reload the page. The error state should display a friendly message and the Retry button. Restore the connection and select Retry to request the initial fields again. The technical failure details remain available in the browser console for diagnosis.
 
-No hay persistencia: los campos añadidos desaparecen al recargar. No existe conexión al backend Java. Las temperaturas son de un servicio meteorológico externo, no de sensores físicos.
+## Limitations
+
+- There is no persistence.
+- Added fields disappear after reload.
+- There is no Java backend integration yet.
+- Weather data comes from an external service, not from physical field sensors.
+
+## Related project
+
+[AgroFrost Core](https://github.com/Felipe713/agrofrost-core)
