@@ -1,274 +1,226 @@
-# ❄️ AgroFrost Frontend — Frost Risk at a Glance
+# AgroFrost Frontend
 
-> 🎓 **Educational project:** This repository is the **Hito 2** frontend deliverable for a Java Full Stack bootcamp. It focuses on strict TypeScript, safe DOM manipulation, form validation, asynchronous requests, and resilient user feedback.
+AgroFrost Frontend is the browser client for the final AgroFrost full-stack integration. It is a framework-free application built with Vanilla TypeScript, native DOM APIs, native `fetch`, and Vite 8. It lists and creates agricultural fields persisted by the separate Spring Boot API and asks that API's Domain layer to assess frost risk.
 
----
+This is an educational system, not a production frost-alert service.
 
-## 🌱 About the Project
+## Repositories and Runtime Boundary
 
-**AgroFrost Frontend** is a responsive web application built with **Vanilla TypeScript and Vite**. It retrieves current meteorological temperatures for agricultural fields and compares them with each crop's critical threshold to provide a clear frost-risk classification.
+The frontend and backend remain independent Git repositories and run as separate processes:
 
-The project continues the domain introduced in [AgroFrost Core](https://github.com/Felipe713/agrofrost-core), but both repositories are currently independent:
+- Frontend: [github.com/Felipe713/agrofrost-frontend](https://github.com/Felipe713/agrofrost-frontend)
+- Backend: [github.com/Felipe713/agrofrost-api-springboot](https://github.com/Felipe713/agrofrost-api-springboot)
+- Local frontend origin: `http://localhost:5173`
+- Default API origin: `http://localhost:8080`
 
-- **AgroFrost Core:** Java domain logic developed with TDD, JUnit, Mockito, and JaCoCo.
-- **AgroFrost Frontend:** browser-based interface built with TypeScript, native DOM APIs, and Fetch.
-
-No Java backend integration or data persistence is implemented yet.
-
----
-
-## 🎯 Engineering Goals
-
-This project demonstrates how to build a maintainable frontend without a framework, with special emphasis on:
-
-1. **Strict domain modeling:** interfaces describe business data, while enums restrict frost-risk and request states.
-2. **Safe browser interactions:** DOM nodes are protected with null guards and specialized type assertions.
-3. **Resilient asynchronous flows:** weather requests use `async/await`, `try/catch`, `response.ok`, loading states, friendly errors, and retry behavior.
-4. **Clear separation of responsibilities:** models, components, services, views, utilities, and initial data live in dedicated modules.
-
----
-
-## 🔥 Main Features
-
-- 🌡️ Loads current weather data for three Chilean agricultural fields.
-- ❄️ Classifies each field as `SAFE`, `WARNING`, or `CRITICAL`.
-- 🧾 Adds a temporary field through a strictly validated form.
-- ⏳ Displays loading, success, empty, and error states.
-- 🔁 Recovers from failed weather requests through a Retry action.
-- 📱 Adapts to desktop, tablet, and mobile screens.
-- ♿ Provides accessible visual feedback for forms and asynchronous operations.
-- 🛡️ Validates external JSON before trusting it inside the application.
-
----
-
-## 🧊 Frost Risk Model
-
-The risk level is calculated by comparing the measured temperature with the field's critical temperature.
-
-| Risk level | Rule | Meaning |
-|---|---|---|
-| `CRITICAL` | `measuredTemperature <= criticalTemperature` | The crop has reached or crossed its critical threshold. |
-| `WARNING` | `measuredTemperature > criticalTemperature` and `measuredTemperature <= criticalTemperature + 2.0` | The crop is still above the threshold, but inside the precaution margin. |
-| `SAFE` | `measuredTemperature > criticalTemperature + 2.0` | The temperature is above the warning margin. |
-
-### Frost Risk Examples
-
-Assume a field has a critical temperature of **0 °C**:
-
-| Measured temperature | Result | Explanation |
-|---:|---|---|
-| `-1.0 °C` | `CRITICAL` | The measured temperature is below the critical threshold. |
-| `0.0 °C` | `CRITICAL` | A temperature equal to the critical threshold is still critical. |
-| `1.5 °C` | `WARNING` | The temperature is above the threshold but remains within the 2 °C warning margin. |
-| `2.0 °C` | `WARNING` | The upper warning boundary is inclusive. |
-| `2.1 °C` | `SAFE` | The temperature is more than 2 °C above the critical threshold. |
-
-> The critical threshold is inclusive, and the upper warning boundary is inclusive as well. Therefore, exactly `0 °C` is `CRITICAL`, while exactly `2 °C` is still `WARNING` in this example.
-
----
-
-## 🔄 From Weather Data to a Visual Decision
+The browser never connects directly to PostgreSQL. Its integration path is:
 
 ```text
-Agricultural field configuration
-              ↓
-      Open-Meteo request
-              ↓
- External JSON validation
-              ↓
-    Frost-risk calculation
-              ↓
- SAFE / WARNING / CRITICAL card
+Browser -> Spring MVC -> Application -> Domain -> JPA -> PostgreSQL
+Browser <- JSON/HTTP  <- Application <- Domain <- JPA <- PostgreSQL
 ```
 
-The frontend treats remote data as `unknown`, validates the expected payload structure, creates a typed weather reading, evaluates the risk, and then renders the result in the dashboard.
+The Spring Boot API is the canonical source of field data and frost-risk decisions. Only fields are persisted. Assessments are calculated by the backend from a client-supplied measured temperature and are not stored as history.
 
----
+## Capabilities
 
-## 🚀 Technology Stack
+- Load the persisted field collection with `GET /api/v1/fields`.
+- Register a field with `POST /api/v1/fields` and render the server response.
+- Keep created fields after browser refresh and service restart when the PostgreSQL volume is preserved.
+- Request a Domain-owned frost assessment with `POST /api/v1/fields/{id}/assessments`.
+- Render `SAFE`, `WARNING`, and `CRITICAL` results returned by the backend.
+- Validate form values before sending a request and validate every remote JSON payload before use.
+- Present loading, success, empty, error, and retry states.
+- Use strict TypeScript without `any` and without a UI framework.
 
-| Area | Technology |
-|---|---|
-| Language | TypeScript |
-| Development server and build | Vite |
-| Interface | Semantic HTML + Vanilla CSS |
-| Architecture | Native ES modules |
-| HTTP client | Native Fetch API |
-| Weather source | Open-Meteo API |
-| DOM handling | Native browser APIs |
+## Technology
 
-No React, Vue, Angular, Axios, Bootstrap, Tailwind CSS, or backend framework is used.
+| Area | Choice |
+| --- | --- |
+| Language | TypeScript 6 in strict mode |
+| Development and build | Vite 8 |
+| UI | Semantic HTML, CSS, native DOM APIs |
+| HTTP | Native Fetch API |
+| Backend | Separate Spring Boot 3 API |
+| Persistence | PostgreSQL through backend JPA adapters |
 
----
+Vite 8 requires Node.js `^20.19.0` or `>=22.12.0`. Use a currently supported Node release that satisfies that range.
 
-## 📁 Project Structure
+## Quick Start
 
-```text
-agrofrost-frontend/
-├── public/                         # Static public assets
-├── src/
-│   ├── components/                 # Reusable cards, form, and state views
-│   │   ├── FieldCard/
-│   │   ├── FieldForm/
-│   │   └── StateView/
-│   ├── data/
-│   │   └── initialFields.ts        # Initial Chilean agricultural fields
-│   ├── models/                     # Interfaces and enums
-│   ├── services/
-│   │   └── weather.service.ts      # Open-Meteo communication
-│   ├── styles/
-│   │   └── global.css              # Responsive application styles
-│   ├── utils/                      # DOM, validation, type guards, and risk logic
-│   ├── views/
-│   │   └── frostDashboard.view.ts  # Dashboard DOM coordination
-│   └── main.ts                     # Application bootstrap
-├── docs/
-│   ├── HITO2_CHECKLIST.md
-│   └── HITO2_EXPLANATION_ES.md
-├── index.html
-├── package.json
-├── tsconfig.json
-└── README.md
-```
+### 1. Start the backend
 
-### Module Responsibilities
-
-- **`models`** — defines business interfaces and strict enums.
-- **`components`** — creates reusable visual elements and captures form interactions.
-- **`services`** — communicates with Open-Meteo and validates its response.
-- **`views`** — coordinates dashboard containers and visual states.
-- **`utils`** — contains pure risk logic, validators, DOM helpers, and type guards.
-- **`data`** — stores the initial field configuration.
-- **`main.ts`** — starts the application and orchestrates the initial loading flow.
-
----
-
-## 🛡️ Strict TypeScript and Safe DOM Handling
-
-The application keeps TypeScript protections active throughout the frontend:
-
-- Business objects are modeled with exported `interface` declarations.
-- `FrostRiskLevel` and `RequestStatus` prevent free-form state strings.
-- External JSON and caught errors are handled as `unknown`.
-- The source code does not use `any`.
-- External JSON is checked with a type guard before use.
-- DOM elements are treated as potentially `null`.
-- `HTMLFormElement` and `HTMLInputElement` assertions are combined with explicit guards.
-- `event.preventDefault()` stops the form from reloading the page.
-- Invalid data is rejected before any weather request is sent.
-
----
-
-## ⚡ Asynchronous and Resilient UI
-
-Weather requests use modern asynchronous control:
-
-- `async/await` keeps the flow readable.
-- `try/catch` prevents network failures from breaking the page.
-- `response.ok` validates the HTTP response before reading the payload.
-- Loading messages guide the user while data is being requested.
-- Friendly errors are displayed in the interface.
-- Technical details remain available through `console.error`.
-- The Retry button repeats the initial weather request after a failure.
-- The form button is temporarily disabled to prevent duplicate submissions.
-
----
-
-## 🛠️ Installation and Local Execution
-
-### 1. Install dependencies
+Follow the [backend README](https://github.com/Felipe713/agrofrost-api-springboot#quick-start). For the standard local environment, its essential commands are:
 
 ```bash
-npm install
+cp .env.example .env
+docker compose up -d db
+set -a
+source .env
+set +a
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-### 2. Start the development server
+The development API listens on `http://localhost:8080`. Its default CORS allowlist includes `http://localhost:5173`.
+
+### 2. Configure the frontend
+
+Create a local environment file when the API does not use the default origin:
 
 ```bash
+cp .env.example .env
+```
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+`VITE_API_BASE_URL` is read by Vite and defaults to `http://localhost:8080`. It must identify the Spring Boot API origin, without an API path. Like every `VITE_*` value, it is exposed to browser code and must never contain credentials or secrets. Restart the development server after changing it.
+
+### 3. Install and run
+
+Use the lockfile for a reproducible install:
+
+```bash
+npm ci
 npm run dev
 ```
 
-Vite will display the local URL in the terminal, usually `http://localhost:5173`.
+Open the URL printed by Vite, normally `http://localhost:5173`.
 
-### 3. Verify TypeScript and create the production build
+### 4. Verify and build
 
 ```bash
 npm run build
-```
-
-### 4. Preview the production build
-
-```bash
 npm run preview
 ```
 
----
+`npm run build` runs `tsc` before Vite and writes the deployable static assets to `dist/`. `npm run preview` is a local build check, not a production server.
 
-## 🧪 Try the Form
+## Canonical HTTP Contract
 
-Use this valid Chilean example:
+The complete API also supports `GET /api/v1/fields/{id}`; the current UI uses the following three operations:
 
-| Field | Value |
-|---|---|
-| Field name | `Campo de prueba` |
-| Crop | `Palto` |
-| Latitude | `-33.60` |
-| Longitude | `-70.88` |
-| Critical temperature | `1` |
+| Method and path | Expected success | Frontend use |
+| --- | --- | --- |
+| `GET /api/v1/fields` | `200 FieldResponse[]` | Initial list and retry |
+| `POST /api/v1/fields` | `201 FieldResponse` | Persist and render a field |
+| `POST /api/v1/fields/{id}/assessments` | `200 FrostAssessmentResponse` | Ask the backend to classify risk |
 
-The application should request the current temperature, classify the frost risk, add a new card, and clear the form.
+The client rejects an unexpected status or JSON shape instead of trusting it. Canonical failures use `ErrorResponse`; malformed failure payloads receive a generic safe message.
 
-### Validation Scenarios
+### Exact DTO Overview
 
-Try the following values one at a time:
+All properties shown below are required and non-null in the canonical contract.
 
-- Empty field name.
-- Empty crop.
-- Latitude `91`.
-- Longitude `181`.
-- Critical temperature `-11`.
-- Critical temperature `11`.
+```ts
+interface CreateFieldRequest {
+  id: string;
+  name: string;
+  crop: string;
+  criticalTemperature: number;
+}
 
-Invalid data must display visible feedback and must not trigger a weather request.
+interface FieldResponse {
+  id: string;
+  name: string;
+  crop: string;
+  criticalTemperature: number;
+}
 
----
+interface FrostAssessmentRequest {
+  measuredTemperature: number;
+}
 
-## 🧯 Test Network Failure and Recovery
+interface FrostAssessmentResponse {
+  fieldId: string;
+  measuredTemperature: number;
+  criticalTemperature: number;
+  riskLevel: 'SAFE' | 'WARNING' | 'CRITICAL';
+}
 
-1. Start the application with `npm run dev`.
-2. Open the browser developer tools.
-3. Block requests to `api.open-meteo.com`.
-4. Reload the application.
-5. Confirm that the dashboard displays a friendly error and the **Retry** button.
-6. Remove the request block.
-7. Press **Retry**.
-8. Confirm that the three initial fields load again.
+interface ErrorResponse {
+  timestamp: string;
+  status: number;
+  error: string;
+  code: string;
+  message: string;
+  path: string;
+}
+```
 
-> Do not place the entire browser in Offline mode for this test, because that also blocks the local Vite application.
+`timestamp` is an ISO-8601 instant and `ErrorResponse.status` must equal the HTTP status. See [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) and the backend OpenAPI document for contract details.
 
----
+## State and Failure Handling
 
-## ⚠️ Current Limitations
+Initial collection loading displays a loading state. A successful non-empty response renders field cards; an empty array renders the empty state. A connection, HTTP, JSON, status, or contract failure renders a safe error and exposes **Retry**, which repeats the list request.
 
-- No persistence is implemented.
-- Fields added through the form disappear after reloading.
-- The frontend is not connected to AgroFrost Core yet.
-- Weather readings come from an external meteorological service.
-- The readings do not represent physical sensors installed in agricultural fields.
+Field creation disables the submit button while the request is active. Success resets the form, displays a persisted-success message, and adds the returned field to the current collection. Failure preserves the form values and allows another submission.
 
----
+Each field card accepts a measured temperature. Assessment success replaces the pending badge with the backend result. Failure displays the API message and changes the action to **Reintentar evaluación**. These assessment results live only in current browser memory; refreshing requests the persisted fields again in an unevaluated state.
 
-## 🔗 Related Project
+## Type Safety
 
-### [AgroFrost Core](https://github.com/Felipe713/agrofrost-core)
+`tsconfig.json` enables `strict`, `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`, unused-code checks, and no emit. The application contains no `any` usage or TypeScript suppression directives.
 
-The Hito 1 Java domain project developed with:
+Remote JSON is parsed as `unknown` and narrowed through runtime guards for field arrays, field responses, assessments, and errors. DOM lookups are null-safe and narrowed to the required element class. These checks complement the backend contract; they do not replace server-side validation.
 
-- TDD
-- JUnit 5
-- Mockito
-- JaCoCo
-- Constructor dependency injection
-- Pure domain architecture
+## CORS
 
-Together, both repositories represent the first two stages of the AgroFrost learning project: tested Java business rules and a dynamic TypeScript frontend.
+The browser and API use different local origins, so the backend owns the CORS policy. In `dev`, `CORS_ALLOWED_ORIGINS` defaults to the exact Vite origin `http://localhost:5173`. The global `/api/**` policy allows only:
+
+- Methods: `GET`, `POST`, `OPTIONS`
+- Request headers: `Accept`, `Content-Type`
+- Credentials: disabled
+- Origins: explicit allowlist, never `*`
+
+If Vite selects another port or the frontend is deployed elsewhere, set `CORS_ALLOWED_ORIGINS` on the backend to the exact frontend origin. `VITE_API_BASE_URL` and CORS solve different sides of the connection: the first tells the browser where to send requests; the second tells Spring which browser origins may read responses.
+
+## End-to-End Verification
+
+1. Start PostgreSQL and the backend in `dev` as described above.
+2. Run `npm ci` and `npm run dev` in this repository.
+3. Open `http://localhost:5173` and confirm the initial `GET /api/v1/fields` returns `200` in the Network panel.
+4. Register `FIELD-E2E`, a name, a crop, and critical temperature `0`. Confirm `POST /api/v1/fields` returns `201` and the card appears.
+5. Refresh the browser. Confirm `GET /api/v1/fields` still includes `FIELD-E2E`.
+6. Restart the API or PostgreSQL without running `docker compose down -v`, refresh again, and confirm the field remains. This demonstrates PostgreSQL persistence rather than browser-only state.
+7. Assess `FIELD-E2E` with `0.0`, `2.0`, and `2.1`. For a `0.0` threshold, confirm the backend returns `CRITICAL`, `WARNING`, and `SAFE`, respectively.
+8. Stop the backend and refresh the page. Confirm the error and **Retry** action appear; restart the backend and retry successfully.
+9. Confirm successful API responses include `Access-Control-Allow-Origin: http://localhost:5173` where applicable and the browser console has no CORS or integration errors.
+
+Never use `docker compose down -v` when testing durability because it deletes the PostgreSQL volume.
+
+## Production Notes
+
+- Build with the production API origin already set, for example `VITE_API_BASE_URL=https://api.example.com npm run build`; Vite embeds the value in the static bundle at build time.
+- Serve `dist/` from a real static host or reverse proxy. Do not use `vite` or `vite preview` as a production server.
+- Configure the backend `CORS_ALLOWED_ORIGINS` with the exact HTTPS frontend origin.
+- Keep database credentials and other secrets only in backend runtime configuration or a secret manager. They must not enter the frontend bundle.
+- The backend `prod` profile disables Swagger/OpenAPI, uses `ddl-auto=validate`, and requires an already provisioned compatible schema and external database settings.
+- Terminate TLS, set operational logging/monitoring, and apply deployment controls outside this educational repository.
+
+## CI and Quality Gates
+
+The backend repository has GitHub Actions CI that runs its Java 17 Maven verification and Compose validation. Locally, its equivalent quality gate is:
+
+```bash
+./mvnw --batch-mode clean verify
+```
+
+This frontend's reproducible gate is:
+
+```bash
+npm ci
+npm run build
+```
+
+The versioned `.github/workflows/ci.yml` runs on pushes and pull requests to `main`, uses Node 22 with npm caching, and executes the same `npm ci` plus `npm run build` gate. A remote CI result is recorded only after an authorized publication.
+
+## Current Limitations
+
+- The UI supports list, create, and assess; it does not update or delete persisted fields.
+- Assessments are not persisted and there is no assessment history.
+- Measured temperature is entered by the user; there is no weather-provider or physical-sensor integration.
+- Authentication, authorization, notifications, and multi-user isolation are not implemented.
+- The frontend has no automated browser test suite; strict build checks and the documented manual E2E flow provide current frontend evidence.
+- Production deployment manifests, schema migrations, observability, and operational hardening are outside the project scope.

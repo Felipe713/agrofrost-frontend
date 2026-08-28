@@ -1,3 +1,3 @@
-export function createLoadingState(): HTMLElement { const state = document.createElement('p'); state.className = 'state-message loading'; state.textContent = 'Consultando temperaturas actuales…'; return state; }
-export function createEmptyState(): HTMLElement { const state = document.createElement('p'); state.className = 'state-message'; state.textContent = 'No hay campos disponibles para consultar.'; return state; }
+export function createLoadingState(): HTMLElement { const state = document.createElement('p'); state.className = 'state-message loading'; state.textContent = 'Cargando Fields persistidos...'; return state; }
+export function createEmptyState(): HTMLElement { const state = document.createElement('p'); state.className = 'state-message'; state.textContent = 'No hay Fields persistidos. Registra el primero para comenzar.'; return state; }
 export function createErrorState(message: string): HTMLElement { const state = document.createElement('p'); state.className = 'state-message error'; state.setAttribute('role', 'alert'); state.textContent = message; return state; }

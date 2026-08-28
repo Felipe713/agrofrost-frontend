@@ -1,37 +1,63 @@
 import './styles/global.css';
+import './styles/integration.css';
 import { initializeFieldForm } from './components/FieldForm';
-import { initialFields } from './data/initialFields';
-import { type AgriculturalField, type FieldFormPayload, type FrostObservation } from './models';
-import { fetchCurrentWeather } from './services/weather.service';
-import { evaluateFrostRisk } from './utils/frostRisk';
+import type { CreateFieldRequest, FieldDto, FrostAssessmentResponse } from './models';
+import { assessFrost, createField, listFields } from './services/agrofrostApi.service';
+import { getRequiredElement } from './utils/dom';
 import { FrostDashboardView } from './views/frostDashboard.view';
 
 async function bootstrap(): Promise<void> {
   const view = new FrostDashboardView();
-  const form = document.getElementById('field-form') as HTMLFormElement | null;
-  if (form === null) throw new Error('Required element #field-form is missing.');
-  const createObservation = async (field: AgriculturalField): Promise<FrostObservation> => {
-    const reading = await fetchCurrentWeather(field);
-    return { field, reading, riskLevel: evaluateFrostRisk(reading.temperature, field.criticalTemperature) };
+  const form = getRequiredElement('field-form', HTMLFormElement);
+  let fields: FieldDto[] = [];
+  const assessments = new Map<string, FrostAssessmentResponse>();
+  let activeLoad: AbortController | null = null;
+
+  const render = (): void => {
+    view.renderFields(fields, assessments, handleAssessment);
   };
-  const loadInitialFields = async (): Promise<void> => {
+
+  async function handleAssessment(fieldId: string, measuredTemperature: number): Promise<FrostAssessmentResponse> {
+    activeLoad?.abort();
+    activeLoad = null;
+    const assessment = await assessFrost(fieldId, { measuredTemperature });
+    assessments.set(fieldId, assessment);
+    render();
+    return assessment;
+  }
+
+  const loadFields = async (): Promise<void> => {
+    activeLoad?.abort();
+    const request = new AbortController();
+    activeLoad = request;
     view.showLoading();
     try {
-      if (initialFields.length === 0) { view.showEmpty(); return; }
-      const observations = await Promise.all(initialFields.map(createObservation));
-      view.renderObservations(observations);
+      const loadedFields = await listFields(request.signal);
+      if (activeLoad !== request) return;
+      fields = loadedFields;
+      assessments.clear();
+      render();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unexpected error occurred.';
-      view.showError(message);
+      if (request.signal.aborted) return;
+      view.showError(error instanceof Error ? error.message : 'Ocurrió un error inesperado.');
+    } finally {
+      if (activeLoad === request) activeLoad = null;
     }
   };
-  initializeFieldForm(form, async (payload: FieldFormPayload): Promise<void> => {
-    const field: AgriculturalField = { id: `field-${crypto.randomUUID()}`, ...payload };
-    const observation = await createObservation(field);
-    view.addObservation(observation);
+
+  initializeFieldForm(form, async (payload: CreateFieldRequest): Promise<void> => {
+    activeLoad?.abort();
+    activeLoad = null;
+    const savedField = await createField(payload);
+    fields = [...fields.filter((field) => field.id !== savedField.id), savedField];
+    render();
   });
-  view.onRetry(() => { void loadInitialFields(); });
-  await loadInitialFields();
+  view.onRetry(() => { void loadFields(); });
+  await loadFields();
 }
 
-document.addEventListener('DOMContentLoaded', () => { void bootstrap(); });
+document.addEventListener('DOMContentLoaded', () => {
+  void bootstrap().catch(() => {
+    document.body.textContent = 'AgroFrost no pudo inicializar la interfaz.';
+  });
+});

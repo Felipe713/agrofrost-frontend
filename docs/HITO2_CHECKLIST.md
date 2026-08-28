@@ -1,5 +1,7 @@
 # Checklist de revisión Hito 2
 
+> **DOCUMENTO HISTÓRICO ARCHIVADO.** Conserva la evidencia comprobada durante el Hito 2. Los elementos descritos aquí no definen el comportamiento full-stack actual; consulta `README.md` y `docs/FINAL_FULLSTACK_EXPLANATION_ES.md` para la entrega vigente.
+
 ## Pilar 1: Modelado y tipado estricto
 
 - [x] Interfaces exportadas y usadas para los modelos.

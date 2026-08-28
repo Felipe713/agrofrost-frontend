@@ -1,0 +1,44 @@
+.risk-badge {
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.risk-pending {
+  color: #536b5e;
+  background: #e9efeb;
+}
+
+.field-card dl {
+  margin-top: 1.25rem;
+}
+
+.field-card dd {
+  overflow-wrap: anywhere;
+}
+
+.risk-guidance {
+  min-height: 3.5rem;
+}
+
+.assessment-form {
+  border-top: 1px solid #edf1eb;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.assessment-feedback {
+  min-height: 1.25rem;
+  margin: 0.5rem 0 0;
+  color: #536b5e;
+  font-size: 0.82rem;
+}
+
+.assessment-feedback.error {
+  color: #9e2d25;
+}
+
+.button-small {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.6rem;
+}

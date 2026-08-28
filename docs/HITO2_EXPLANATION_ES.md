@@ -1,5 +1,7 @@
 # Hito 2: explicación para defensa
 
+> **DOCUMENTO HISTÓRICO ARCHIVADO.** Conserva evidencia del Hito 2 y describe la implementación de ese momento. Su comportamiento ya no representa la integración full-stack actual; consulta `README.md` y `docs/FINAL_FULLSTACK_EXPLANATION_ES.md` para el estado vigente.
+
 ## Fundamentos
 
 TypeScript añade tipos estáticos a JavaScript para detectar errores antes de ejecutar. Una `interface` describe la forma de un objeto; un `enum` representa un conjunto cerrado de opciones. Por eso `FrostRiskLevel` y `RequestStatus` evitan estados escritos libremente. `any` está prohibido porque desactiva esa protección.
