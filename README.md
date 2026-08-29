@@ -4,6 +4,8 @@ AgroFrost Frontend is the browser client for the final AgroFrost full-stack inte
 
 This is an educational system, not a production frost-alert service.
 
+**This repository and the linked Spring Boot backend together constitute the AgroFrost Final Full-Stack delivery.**
+
 ## Repositories and Runtime Boundary
 
 The frontend and backend remain independent Git repositories and run as separate processes:
@@ -37,12 +39,15 @@ The Spring Boot API is the canonical source of field data and frost-risk decisio
 
 | Area | Choice |
 | --- | --- |
-| Language | TypeScript 6 in strict mode |
+| Frontend language | TypeScript 6 in strict mode |
 | Development and build | Vite 8 |
 | UI | Semantic HTML, CSS, native DOM APIs |
 | HTTP | Native Fetch API |
-| Backend | Separate Spring Boot 3 API |
-| Persistence | PostgreSQL through backend JPA adapters |
+| Backend | Java 17, Spring Boot 3 |
+| Persistence | Spring Data JPA, Hibernate, PostgreSQL 16 |
+| Local infrastructure | Docker Compose |
+| Backend quality | JUnit 5, Mockito, MockMvc, JaCoCo |
+| CI | GitHub Actions for frontend and backend |
 
 Vite 8 requires Node.js `^20.19.0` or `>=22.12.0`. Use a currently supported Node release that satisfies that range.
 
@@ -214,7 +219,7 @@ npm ci
 npm run build
 ```
 
-The versioned `.github/workflows/ci.yml` runs on pushes and pull requests to `main`, uses Node 22 with npm caching, and executes the same `npm ci` plus `npm run build` gate. A remote CI result is recorded only after an authorized publication.
+The versioned `.github/workflows/ci.yml` runs on pushes and pull requests to `main`, uses Node 22 with npm caching, and executes the same `npm ci` plus `npm run build` gate. The final full-stack integration commit was successfully verified by the remote GitHub Actions workflow; current workflow status is visible from this repository's **Actions** tab.
 
 ## Current Limitations
 
